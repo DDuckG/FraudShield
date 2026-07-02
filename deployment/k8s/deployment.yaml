@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-api-deployment
+  labels:
+    app: fraud-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fraud-api
+  template:
+    metadata:
+      labels:
+        app: fraud-api
+    spec:
+      serviceAccountName: fraud-api-ksa
+      imagePullSecrets:
+        - name: dockerhub-secret
+      containers:
+        - name: fraud-api
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: GCS_BUCKET_NAME
+              value: fraud-detection-prediction
+            - name: PREDICTION_PREFIX
+              value: predictions
+            - name: FEEDBACK_PREFIX
+              value: feedbacks
+            - name: DRIFT_REPORT_PREFIX
+              value: drift-reports
+            - name: PROJECT_ID
+              value: fraud-detection-493811
+            - name: BQ_DATASET
+              value: fraud_monitoring
+            - name: APP_ENV
+              value: staging
+            - name: MODEL_VERSION
+              value: v1.0.0
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10

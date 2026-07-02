@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-api-service
+  labels:
+    app: fraud-api
+  annotations:
+    cloud.google.com/load-balancer-type: "External"
+spec:
+  selector:
+    app: fraud-api
+  type: LoadBalancer
+  loadBalancerIP: 136.111.173.2
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8000

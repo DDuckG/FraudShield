@@ -1,0 +1,24 @@
+data:
+  raw_path: data/raw/transactions.csv
+  train_log_path: data/processed/train_log.parquet
+  valid_log_path: data/processed/valid_log.parquet
+  test_log_path: data/processed/test_log.parquet
+  train_tree_path: data/processed/train_tree.parquet
+  valid_tree_path: data/processed/valid_tree.parquet
+  test_tree_path: data/processed/test_tree.parquet
+
+split:
+  valid_start: "2024-01-01"
+  test_start: "2024-04-01"
+
+paths:
+  reports_dir: reports/training
+  models_dir: models
+
+mlflow:
+  tracking_uri: http://localhost:5555
+
+tune:
+  n_trials: 2
+  precision_floor: 0.65
+  threshold_step: 0.01
