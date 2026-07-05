@@ -14,8 +14,9 @@ COPY pyproject.toml uv.lock ./
 # API chỉ cần nhóm serve, không kéo tool train/notebook/demo vào image.
 RUN uv sync --frozen --no-default-groups --group serve --no-install-project --no-cache
 
-# Copy source code sau
-COPY . .
+# Copy đúng phần API cần chạy, tránh kéo data/report/cache vào image serve.
+COPY src ./src
+COPY models ./models
 
 # Expose cổng FastAPI
 EXPOSE 8000

@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+
+# Image này chỉ chạy drift report, nên tách khỏi API serve image.
+RUN uv sync --frozen --no-default-groups --group monitoring --no-install-project --no-cache
+
+COPY src ./src
+COPY data/raw/transactions.csv ./data/raw/transactions.csv
+
+CMD ["/app/.venv/bin/python", "-m", "src.monitoring.run_drift_report"]

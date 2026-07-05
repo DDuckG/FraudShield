@@ -19,8 +19,8 @@ jobs:
       id-token: write
 
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.LOCAL_AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.LOCAL_AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID || secrets.LOCAL_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY || secrets.LOCAL_AWS_SECRET_ACCESS_KEY }}
       AWS_DEFAULT_REGION: ap-southeast-1
       S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
 
@@ -41,13 +41,26 @@ jobs:
       - name: Sync environment
         run: uv sync --no-default-groups --group train
 
-      - name: Pull latest data from S3     
+      - name: Prepare training data
         run: |
-          uv run dvc pull --allow-missing
+          set -euo pipefail
+          if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+            uv run --group train dvc pull --allow-missing || {
+              echo "::warning::DVC pull failed, falling back to Kaggle download."
+              uv run --group train python src/data/get_data.py
+            }
+            if [[ ! -f data/raw/transactions.csv ]]; then
+              echo "::warning::Raw data is still missing after DVC pull. Downloading from Kaggle."
+              uv run --group train python src/data/get_data.py
+            fi
+          else
+            echo "::warning::AWS credentials are not configured. Using Kaggle download instead of DVC pull."
+            uv run --group train python src/data/get_data.py
+          fi
       
       - name: Start MLflow server
         run: |
-          uv run mlflow server \
+          uv run --group train mlflow server \
             --backend-store-uri sqlite:///mlflow.db \
             --default-artifact-root ./mlruns \
             --host 0.0.0.0 \
@@ -56,11 +69,16 @@ jobs:
 
       - name: Run full training pipeline
         run: |
-          uv run dvc repro --force
+          uv run --group train dvc repro --force
 
       - name: Push to S3
         run: |
-          uv run dvc push
+          set -euo pipefail
+          if [[ -n "${AWS_ACCESS_KEY_ID:-}" && -n "${AWS_SECRET_ACCESS_KEY:-}" ]]; then
+            uv run --group train dvc push
+          else
+            echo "::warning::AWS credentials are not configured. Skipping DVC push."
+          fi
 
       - name: Commit reports and meta back to Git # commit to Git
         env:

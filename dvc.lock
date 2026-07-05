@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   feature_engineering:
-    cmd: uv run python src/features/FeatureEngineering.py --raw-input
+    cmd: uv run --group train python src/features/FeatureEngineering.py --raw-input
       data/raw/transactions.csv --valid-start 2024-01-01 --test-start 2024-04-01
       --train-log-output data/processed/train_log.parquet --test-log-output
       data/processed/test_log.parquet --valid-log-output
@@ -81,7 +81,7 @@ stages:
       md5: 850d7b88b484720f332f8df1542249f2
       size: 174
   train_models:
-    cmd: uv run python src/model/train_models.py --config
+    cmd: uv run --group train python src/model/train_models.py --config
       configs/model_config.yaml --train-log data/processed/train_log.parquet
       --valid-log data/processed/valid_log.parquet --train-tree
       data/processed/train_tree.parquet --valid-tree
@@ -137,7 +137,7 @@ stages:
       md5: 528c05c1e3f772d4b851c1ab909bb450
       size: 362
   tune_model:
-    cmd: uv run python src/model/tune_model.py --config
+    cmd: uv run --group train python src/model/tune_model.py --config
       configs/model_config.yaml --best-model-json
       reports/training/best_model.json --train-log
       data/processed/train_log.parquet --valid-log
