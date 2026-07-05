@@ -42,7 +42,7 @@ jobs:
           enable-cache: true
 
       - name: Sync environment
-        run: uv sync
+        run: uv sync --no-default-groups --group train
 
       - name: Pull model artifacts from S3
         run: uv run dvc pull
@@ -86,10 +86,29 @@ jobs:
     env:
       IMAGE_NAME: ${{ secrets.TEST_DOCKERHUB_USERNAME }}/${{ secrets.TEST_DOCKERHUB_REPO }}
       IMAGE_TAG:  ${{ needs.build-and-push.outputs.image_tag }}
+      IMAGE_REF: ${{ secrets.TEST_DOCKERHUB_USERNAME }}/${{ secrets.TEST_DOCKERHUB_REPO }}:${{ needs.build-and-push.outputs.image_tag }}
+      PROJECT_ID: ${{ vars.PROJECT_ID || secrets.PROJECT_ID }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+      GCS_BUCKET_NAME: ${{ vars.GCS_BUCKET_NAME || secrets.GCS_BUCKET_NAME }}
+      PREDICTION_PREFIX: predictions
+      FEEDBACK_PREFIX: feedbacks
+      DRIFT_REPORT_PREFIX: drift-reports
+      BQ_DATASET: ${{ vars.BQ_DATASET || 'fraud_shield_monitoring' }}
+      APP_ENV: staging
+      MODEL_VERSION: ${{ needs.build-and-push.outputs.image_tag }}
+      PERSISTENCE_MODE: strict
+      REFERENCE_DATA_PATH: data/raw/transactions.csv
+      GSA_EMAIL: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+      GRAFANA_GSA_EMAIL: ${{ vars.GRAFANA_GSA_EMAIL || secrets.GRAFANA_GSA_EMAIL }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install manifest renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
 
       - name: Debug GitHub context
         run: |
@@ -121,12 +140,11 @@ jobs:
 
       - name: Apply ServiceAccount
         run: |
-          kubectl apply -f deployment/k8s/sa.yaml
+          envsubst < deployment/k8s/sa.yaml | kubectl apply -f -
 
       - name: Render & apply Deployment
         run: |
-          sed "s|IMAGE_PLACEHOLDER|${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}|g" \
-            deployment/k8s/deployment.yaml | kubectl apply -f -
+          envsubst < deployment/k8s/deployment.yaml | kubectl apply -f -
 
       - name: Apply Service
         run: |
@@ -134,8 +152,7 @@ jobs:
 
       - name: Apply Drift CronJob
         run: |
-          sed "s|IMAGE_PLACEHOLDER|${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}|g" \
-            deployment/k8s/monitoring-cronjob.yaml | kubectl apply -f -
+          envsubst < deployment/k8s/monitoring-cronjob.yaml | kubectl apply -f -
 
       - name: Run drift report on deploy
         run: |
@@ -168,7 +185,7 @@ jobs:
 
       - name: Apply Grafana Kubernetes ServiceAccount
         run: |
-          kubectl apply -f deployment/k8s/grafana/grafana-sa.yaml
+          envsubst < deployment/k8s/grafana/grafana-sa.yaml | kubectl apply -f -
 
       - name: Add Grafana Helm repo
         run: |
@@ -177,10 +194,11 @@ jobs:
 
       - name: Deploy Grafana with Helm
         run: |
+          envsubst < deployment/k8s/grafana/grafana-values.yaml > /tmp/grafana-values.yaml
           helm upgrade --install grafana grafana/grafana \
             -n default \
-            -f deployment/k8s/grafana/grafana-values.yaml \
-            --set adminPassword="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+            -f /tmp/grafana-values.yaml \
+            --set-string adminPassword="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
 
       - name: Wait for rollout
         run: |
@@ -193,7 +211,7 @@ jobs:
           kubectl describe pods
           POD=$(kubectl get pods -l app=fraud-api --no-headers -o custom-columns=":metadata.name" | head -1)
           echo "=== LOGS FOR POD: $POD ==="
-          kubectl logs $POD
+          kubectl logs $POD || true
           echo "=== PREVIOUS LOGS ==="
           kubectl logs $POD --previous || true
 

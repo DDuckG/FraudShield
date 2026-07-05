@@ -4,4 +4,4 @@ metadata:
   name: fraud-shield-api
   namespace: default
   annotations:
-    iam.gke.io/gcp-service-account: fraud-shield-api@project-81c35834-dcf8-4001-9b2.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: ${GSA_EMAIL}

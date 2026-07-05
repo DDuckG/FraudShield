@@ -1,4 +1,4 @@
 [core]
     remote = storage
-['remote "storage"']
+[remote "storage"]
     url = s3://fraud-shield-dvc-bucket-848919839971-ap-southeast-1-an/dvc-storage

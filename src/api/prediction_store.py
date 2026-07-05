@@ -28,11 +28,18 @@ def _build_gcs_blob_name(event_time: datetime, prediction_id: str) -> str:
     return f"{PREDICTION_PREFIX}/dt={dt}/hour={hour}/{prediction_id}.parquet"
 
 
-def save_prediction_record(record: dict) -> str:
-    if not GCS_BUCKET:
-        raise RuntimeError("Missing GCS_BUCKET_NAME environment variable")
+def _build_batch_gcs_blob_name(event_time: datetime, batch_id: str) -> str:
+    dt = event_time.strftime("%Y-%m-%d")
+    hour = event_time.strftime("%H")
+    return f"{PREDICTION_PREFIX}/dt={dt}/hour={hour}/{batch_id}.parquet"
 
-    df = pd.DataFrame([record])
+
+def _event_time(value: str | datetime) -> datetime:
+    return datetime.fromisoformat(value) if isinstance(value, str) else value
+
+
+def _records_to_buffer(records: list[dict]) -> io.BytesIO:
+    df = pd.DataFrame(records)
 
     buffer = io.BytesIO()
     df.to_parquet(
@@ -42,13 +49,14 @@ def save_prediction_record(record: dict) -> str:
         index=False,
     )
     buffer.seek(0)
+    return buffer
 
-    event_time = record["event_time"]
-    if isinstance(event_time, str):
-        event_time = datetime.fromisoformat(event_time)
 
-    prediction_id = record["prediction_id"]
-    blob_name = _build_gcs_blob_name(event_time, prediction_id)
+def _upload_parquet(records: list[dict], blob_name: str) -> str:
+    if not GCS_BUCKET:
+        raise RuntimeError("Missing GCS_BUCKET_NAME environment variable")
+
+    buffer = _records_to_buffer(records)
 
     client = _get_gcs_client()
     bucket = client.bucket(GCS_BUCKET)
@@ -56,6 +64,21 @@ def save_prediction_record(record: dict) -> str:
     blob.upload_from_file(buffer, content_type="application/octet-stream")
 
     return blob_name
+
+
+def save_prediction_record(record: dict) -> str:
+    event_time = _event_time(record["event_time"])
+    blob_name = _build_gcs_blob_name(event_time, record["prediction_id"])
+    return _upload_parquet([record], blob_name)
+
+
+def save_prediction_records(records: list[dict], batch_id: str | None = None) -> str:
+    if not records:
+        raise ValueError("records không được rỗng")
+
+    event_time = _event_time(records[0]["event_time"])
+    blob_name = _build_batch_gcs_blob_name(event_time, batch_id or str(uuid.uuid4()))
+    return _upload_parquet(records, blob_name)
 
 
 def make_prediction_record(

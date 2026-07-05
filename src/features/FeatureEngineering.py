@@ -176,6 +176,7 @@ def add_features(df: pd.DataFrame, params: dict) -> tuple[pd.DataFrame, list[str
 def remove_non_model_columns(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
+    df = df.drop(columns=list(ID_COLS), errors="ignore")
     df = df.drop(columns=["timestamp"], errors="ignore")
 
     dt_cols = df.select_dtypes(include=["datetime64[ns]", "datetime64[ns, UTC]"]).columns.tolist()
@@ -271,16 +272,21 @@ def label_encode(
         encoders = {}
         for col in cate_cols:
             le = LabelEncoder()
-            df[col] = le.fit_transform(df[col].astype(str))
+            values = pd.concat(
+                [df[col].astype(str), pd.Series(["UNKNOWN"])],
+                ignore_index=True,
+            )
+            le.fit(values)
+            df[col] = le.transform(df[col].astype(str))
             encoders[col] = le
     else:
         for col in cate_cols:
             if col in encoders:
                 le = encoders[col]
                 s = df[col].astype(str)
-                s = s.map(lambda x: x if x in le.classes_ else "UNKNOWN")
-                if "UNKNOWN" not in le.classes_:
-                    le.classes_ = np.append(le.classes_, "UNKNOWN")
+                known = set(le.classes_)
+                fallback = "UNKNOWN" if "UNKNOWN" in known else le.classes_[0]
+                s = s.map(lambda x: x if x in known else fallback)
                 df[col] = le.transform(s)
             else:
                 df[col] = 0

@@ -59,11 +59,20 @@ git clone git@github.com:DDuckG/FraudShield.git
 cd FraudShield
 ```
 
-Cài dependency:
+Cài dependency. Nếu muốn làm việc đầy đủ trên repo, dùng tất cả group:
 
 ```bash
-uv sync
+uv sync --all-groups
 cp .env.example .env
+```
+
+Nếu chỉ chạy một phần, có thể sync theo vai trò:
+
+```bash
+uv sync --no-default-groups --group serve       # FastAPI inference
+uv sync --no-default-groups --group train       # DVC, train, MLflow
+uv sync --no-default-groups --group monitoring  # drift report
+uv sync --no-default-groups --group demo        # Streamlit
 ```
 
 > Nếu chỉ chạy local, có thể để trống các biến cloud trong `.env` nhưng để test đủ logging prediction, feedback và drift report, cần điền GCS/BigQuery
@@ -73,7 +82,7 @@ cp .env.example .env
 Cách đơn giản nhất là tải từ Kaggle:
 
 ```bash
-uv run python src/data/get_data.py
+uv run --group train python src/data/get_data.py
 ```
 
 Output:
@@ -85,7 +94,7 @@ data/raw/transactions.csv
 Hoặc:
 
 ```bash
-uv run dvc pull     # chỉ khi dev có quyền DVC remote S3
+uv run --group train dvc pull     # chỉ khi dev có quyền DVC remote S3
 ```
 
 > Để dùng remote này cần AWS credential có quyền đọc/ghi bucket.
@@ -114,10 +123,10 @@ cd ../..
 Pipeline chính nằm trong `dvc.yaml`, có thể chạy bằng lệnh:
 
 ```bash
-uv run dvc repro
+uv run --group train dvc repro
 
 # Kiểm tra trạng thái pipeline:
-uv run dvc status
+uv run --group train dvc status
 ```
 
 Output chính sẽ bao gồm:
@@ -136,15 +145,15 @@ models/trained/tuning_pr_auc_by_trial.png
 Sau khi train lại và muốn đẩy artifact lên DVC remote (như đã nói, cần quyền, chủ yếu phục vụ dev, not demo):
 
 ```bash
-uv run dvc push
+uv run --group train dvc push
 ```
 
 ## Chạy API
 
-API cần model artifact trong `models/trained` và `models/artifacts`. Nếu chưa có, chạy `uv run dvc pull` hoặc `uv run dvc repro` trước. Sau đó, chạy tiến trình API ở riêng một terminal:
+API cần model artifact trong `models/trained` và `models/artifacts`. Nếu chưa có, chạy `uv run --group train dvc pull` hoặc `uv run --group train dvc repro` trước. Sau đó, chạy tiến trình API ở riêng một terminal:
 
 ```bash
-uv run uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+uv run --group serve uvicorn src.api.main:app --host 0.0.0.0 --port 8000
 ```
 
 Endpoint chính bao gồm:
@@ -179,9 +188,9 @@ curl -X POST http://localhost:8000/predict \
     "credit_limit": 5000.0,
     "merchant_category": "electronics",
     "merchant_country": "US",
-    "device_type": "mobile",
+    "device_type": "mobile_app",
     "mcc_code": 5732,
-    "ip_risk_score": 0.72
+    "ip_risk_score": 72.0
   }'
 ```
 
@@ -190,7 +199,7 @@ curl -X POST http://localhost:8000/predict \
 Mở API trước, sau đó chạy:
 
 ```bash
-FRAUD_API_URL=http://localhost:8000 uv run streamlit run src/streamlit/app.py
+FRAUD_API_URL=http://localhost:8000 uv run --group demo streamlit run src/streamlit/app.py
 ```
 
 Streamlit chỉ là giao diện nhập liệu. Logic dự đoán vẫn chạy qua FastAPI.
@@ -218,6 +227,7 @@ PROJECT_ID=<gcp-project-id>
 GCS_BUCKET_NAME=<bucket-name>
 BQ_DATASET=fraud_shield_monitoring
 REFERENCE_DATA_PATH=data/raw/transactions.csv
+PERSISTENCE_MODE=best_effort
 ```
 
 Tạo bucket và dataset:
@@ -243,7 +253,7 @@ Drift job query bảng hoặc view:
 Bảng/view này cần đọc được các file Parquet prediction trong GCS. Sau khi API đã ghi một số prediction, chạy drift report:
 
 ```bash
-uv run python -m src.monitoring.run_drift_report
+uv run --group monitoring python -m src.monitoring.run_drift_report
 ```
 
 Output local:
@@ -278,18 +288,24 @@ hiện chúng đang dùng cấu hình demo của project. Nếu dùng project kh
 Render image và deploy:
 
 ```bash
-export IMAGE_REF=<dockerhub-user>/<repo>:<tag>
+set -a
+source .env
+set +a
 
-kubectl apply -f deployment/k8s/sa.yaml
+export IMAGE_REF=<dockerhub-user>/<repo>:<tag>
+export GSA_EMAIL=<service-account-api@project.iam.gserviceaccount.com>
+export GRAFANA_GSA_EMAIL=<service-account-grafana@project.iam.gserviceaccount.com>
+
+envsubst < deployment/k8s/sa.yaml | kubectl apply -f -
 kubectl create secret docker-registry dockerhub-secret \
   --docker-server=https://index.docker.io/v1/ \
   --docker-username=<dockerhub-user> \
   --docker-password=<dockerhub-token> \
   --dry-run=client -o yaml | kubectl apply -f -
 
-sed "s|IMAGE_PLACEHOLDER|$IMAGE_REF|g" deployment/k8s/deployment.yaml | kubectl apply -f -
+envsubst < deployment/k8s/deployment.yaml | kubectl apply -f -
 kubectl apply -f deployment/k8s/service.yaml
-sed "s|IMAGE_PLACEHOLDER|$IMAGE_REF|g" deployment/k8s/monitoring-cronjob.yaml | kubectl apply -f -
+envsubst < deployment/k8s/monitoring-cronjob.yaml | kubectl apply -f -
 kubectl apply -f deployment/k8s/pod-monitoring.yaml
 ```
 
@@ -314,14 +330,15 @@ kubectl logs -f -l job-name=drift-report-initial
 Deploy Grafana:
 
 ```bash
-kubectl apply -f deployment/k8s/grafana/grafana-sa.yaml
+envsubst < deployment/k8s/grafana/grafana-sa.yaml | kubectl apply -f -
 
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
+envsubst < deployment/k8s/grafana/grafana-values.yaml > /tmp/fraudshield-grafana-values.yaml
 helm upgrade --install grafana grafana/grafana \
   -n default \
-  -f deployment/k8s/grafana/grafana-values.yaml \
+  -f /tmp/fraudshield-grafana-values.yaml \
   --set adminPassword="<admin-password>"
 ```
 
@@ -335,7 +352,7 @@ kubectl get service grafana
 
 Workflow trong `.github/workflows`:
 
-- `ci.yaml`: cài dependency, kiểm tra DVC graph, compile source
+- `ci.yaml`: cài dependency, kiểm tra DVC graph, compile source, chạy pytest
 - `ct.yaml`: pull DVC, train full pipeline, push artifact, commit report/model metadata
 - `cd.yaml`: build/push Docker image, deploy GKE, chạy drift job, apply monitoring/Grafana
 
@@ -351,6 +368,9 @@ Secret cần có:
 | `TEST_DOCKERHUB_TOKEN` | Docker Hub token |
 | `WIF_PROVIDER` | GitHub Actions -> Google Cloud |
 | `WIF_SERVICE_ACCOUNT` | Service account deploy |
+| `PROJECT_ID` | GCP project dùng để render manifest |
+| `GCS_BUCKET_NAME` | Bucket lưu prediction, feedback, drift report |
 | `GKE_CLUSTER_NAME` | Tên GKE cluster |
 | `GCP_REGION` | Region GKE |
+| `GRAFANA_GSA_EMAIL` | Service account cho Grafana, có quyền đọc Monitoring/BigQuery |
 | `GRAFANA_ADMIN_PASSWORD` | Mật khẩu admin Grafana |

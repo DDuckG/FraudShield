@@ -26,7 +26,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: drift-report
-              image: IMAGE_PLACEHOLDER        # Sẽ được sed thay thế trong CD pipeline
+              image: ${IMAGE_REF}
               imagePullPolicy: Always
               command:
                 - /app/.venv/bin/python
@@ -34,15 +34,15 @@ spec:
                 - src.monitoring.run_drift_report
               env:
                 - name: GCS_BUCKET_NAME
-                  value: fraud-shield-demo
+                  value: "${GCS_BUCKET_NAME}"
                 - name: DRIFT_REPORT_PREFIX
-                  value: drift-reports
+                  value: "${DRIFT_REPORT_PREFIX}"
                 - name: PROJECT_ID
-                  value: project-81c35834-dcf8-4001-9b2
+                  value: "${PROJECT_ID}"
                 - name: BQ_DATASET
-                  value: fraud_shield_monitoring
+                  value: "${BQ_DATASET}"
                 - name: REFERENCE_DATA_PATH
-                  value: data/raw/transactions.csv
+                  value: "${REFERENCE_DATA_PATH}"
               resources:
                 requests:
                   memory: "256Mi"

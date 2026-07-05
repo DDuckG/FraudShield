@@ -6,6 +6,7 @@ __pycache__
 .dvc/cache
 .dvc/tmp
 .env
+.env.*
 .kaggle
 .pytest_cache
 .ruff_cache
@@ -13,7 +14,7 @@ __pycache__
 notebooks
 mlruns
 mlflow.db
-catboost_info
+data/raw
 data/processed
 models/ci
 reports/ci

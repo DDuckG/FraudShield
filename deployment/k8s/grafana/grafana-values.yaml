@@ -36,7 +36,7 @@ datasources:
         editable: true
         jsonData:
           authenticationType: gce
-          defaultProject: project-81c35834-dcf8-4001-9b2
+          defaultProject: ${PROJECT_ID}
 
       # Section C + D
       - name: BigQuery
@@ -44,8 +44,8 @@ datasources:
         access: proxy
         jsonData:
           authenticationType: gce
-          defaultProject: project-81c35834-dcf8-4001-9b2
-          processingLocation: asia-southeast1
+          defaultProject: ${PROJECT_ID}
+          processingLocation: ${GCP_REGION}
 
 plugins:
   - grafana-bigquery-datasource

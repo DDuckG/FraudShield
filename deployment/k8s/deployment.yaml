@@ -19,40 +19,42 @@ spec:
         - name: dockerhub-secret
       containers:
         - name: fraud-api
-          image: IMAGE_PLACEHOLDER
+          image: ${IMAGE_REF}
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:
             - name: GCS_BUCKET_NAME
-              value: fraud-shield-demo
+              value: "${GCS_BUCKET_NAME}"
             - name: PREDICTION_PREFIX
-              value: predictions
+              value: "${PREDICTION_PREFIX}"
             - name: FEEDBACK_PREFIX
-              value: feedbacks
+              value: "${FEEDBACK_PREFIX}"
             - name: DRIFT_REPORT_PREFIX
-              value: drift-reports
+              value: "${DRIFT_REPORT_PREFIX}"
             - name: PROJECT_ID
-              value: project-81c35834-dcf8-4001-9b2
+              value: "${PROJECT_ID}"
             - name: BQ_DATASET
-              value: fraud_shield_monitoring
+              value: "${BQ_DATASET}"
             - name: APP_ENV
-              value: staging
+              value: "${APP_ENV}"
             - name: MODEL_VERSION
-              value: v1.0.0
+              value: "${MODEL_VERSION}"
+            - name: PERSISTENCE_MODE
+              value: "${PERSISTENCE_MODE}"
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
               memory: "256Mi"
-              cpu: "250m"
+              cpu: "150m"
+            limits:
+              memory: "768Mi"
+              cpu: "500m"
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
             initialDelaySeconds: 10
-            periodSeconds: 5
+            periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health

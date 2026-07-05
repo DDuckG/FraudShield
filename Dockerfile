@@ -11,8 +11,8 @@ WORKDIR /app
 # Copy file dependency trước để tận dụng cache Docker
 COPY pyproject.toml uv.lock ./
 
-# Cài dependencies vào .venv trong /app
-RUN uv sync --frozen --no-dev --no-install-project --no-cache
+# API chỉ cần nhóm serve, không kéo tool train/notebook/demo vào image.
+RUN uv sync --frozen --no-default-groups --group serve --no-install-project --no-cache
 
 # Copy source code sau
 COPY . .

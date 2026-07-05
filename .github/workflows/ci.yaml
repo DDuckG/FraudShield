@@ -6,8 +6,11 @@ on:
     paths:
       - "data/raw/**"
       - "src/data/**"
+      - "src/api/**"
       - "src/features/**"
       - "src/model/**"
+      - "src/monitoring/**"
+      - "tests/**"
       - "configs/**"
       - "dvc.yaml"
       - "params.yaml"
@@ -36,7 +39,7 @@ jobs:
           enable-cache: true
 
       - name: Sync environment
-        run: uv sync
+        run: uv sync --all-groups
 
       - name: Check DVC pipeline
         run: |
@@ -46,3 +49,7 @@ jobs:
       - name: Compile source
         run: |
           uv run python -m compileall -q src
+
+      - name: Run tests
+        run: |
+          uv run pytest -q
