@@ -10,7 +10,7 @@ Dữ liệu sử dụng là bộ data trên Kaggle [Fraud detection 1M transacti
 
 <p align="center">
     <a href="https://www.youtube.com/watch?v=vMW7HmM4AwI">
-        <img src="https://i.ytimg.com/an_webp/vMW7HmM4AwI/mqdefault_6s.webp?du=3000&sqp=CJaoqtIG&rs=AOn4CLDONwu1V30T5qcj_du0KHtbTJK8MQ"/>
+        <img src="https://img.youtube.com/vi/vMW7HmM4AwI/sddefault.jpg"/>
     </a>
 </p>
 
