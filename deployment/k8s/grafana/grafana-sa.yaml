@@ -4,4 +4,4 @@ metadata:
   name: grafana-ksa
   namespace: default
   annotations:
-    iam.gke.io/gcp-service-account: grafana-monitoring-reader@fraud-detection-493811.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: grafana-monitoring-reader@project-81c35834-dcf8-4001-9b2.iam.gserviceaccount.com

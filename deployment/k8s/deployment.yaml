@@ -14,7 +14,7 @@ spec:
       labels:
         app: fraud-api
     spec:
-      serviceAccountName: fraud-api-ksa
+      serviceAccountName: fraud-shield-api
       imagePullSecrets:
         - name: dockerhub-secret
       containers:
@@ -25,7 +25,7 @@ spec:
             - containerPort: 8000
           env:
             - name: GCS_BUCKET_NAME
-              value: fraud-detection-prediction
+              value: fraud-shield-demo
             - name: PREDICTION_PREFIX
               value: predictions
             - name: FEEDBACK_PREFIX
@@ -33,9 +33,9 @@ spec:
             - name: DRIFT_REPORT_PREFIX
               value: drift-reports
             - name: PROJECT_ID
-              value: fraud-detection-493811
+              value: project-81c35834-dcf8-4001-9b2
             - name: BQ_DATASET
-              value: fraud_monitoring
+              value: fraud_shield_monitoring
             - name: APP_ENV
               value: staging
             - name: MODEL_VERSION

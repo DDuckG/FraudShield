@@ -7,7 +7,6 @@ rbac:
   
 service:
   type: LoadBalancer
-  loadBalancerIP: "34.55.118.108"
   loadBalancerSourceRanges:
     - "0.0.0.0/0"
 adminUser: admin
@@ -37,7 +36,7 @@ datasources:
         editable: true
         jsonData:
           authenticationType: gce
-          defaultProject: fraud-detection-493811
+          defaultProject: project-81c35834-dcf8-4001-9b2
 
       # Section C + D
       - name: BigQuery
@@ -45,8 +44,8 @@ datasources:
         access: proxy
         jsonData:
           authenticationType: gce
-          defaultProject: fraud-detection-493811
-          processingLocation: US
+          defaultProject: project-81c35834-dcf8-4001-9b2
+          processingLocation: asia-southeast1
 
 plugins:
   - grafana-bigquery-datasource

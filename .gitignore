@@ -10,11 +10,19 @@ env/
 # Jupyter artifacts
 .ipynb_checkpoints/
 
+# Python/tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
 # ML model files
 *.pkl
 *.pt
 *.h5
 mlruns/
+mlflow.db
 catboost_info/
 models/artifacts/
 
@@ -27,6 +35,7 @@ data/raw/*.csv
 train.csv
 test.csv
 transactions.csv
+.kaggle/
 
 # Monitoring logs (prediction JSONL files — có thể lớn)
 logs/
@@ -35,7 +44,8 @@ logs/
 reports/drift_report.html
 reports/drift/
 
-# Grafana & Prometheus persistent volumes (Docker)
+# Local service volumes/databases
+deployment/mlflow/mlflow_data/
 deployment/monitoring/grafana/data/
 deployment/monitoring/prometheus/data/
 deployment/monitoring/alertmanager/data/

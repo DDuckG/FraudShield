@@ -20,7 +20,7 @@ spec:
             app: fraud-monitoring
             component: drift-report
         spec:
-          serviceAccountName: fraud-api-ksa  # Dùng lại KSA cũ, đã có quyền GCS + BQ
+          serviceAccountName: fraud-shield-api  # Dùng lại KSA cũ, đã có quyền GCS + BQ
           imagePullSecrets:
             - name: dockerhub-secret
           restartPolicy: OnFailure
@@ -29,20 +29,18 @@ spec:
               image: IMAGE_PLACEHOLDER        # Sẽ được sed thay thế trong CD pipeline
               imagePullPolicy: Always
               command:
-                - uv
-                - run
-                - python
+                - /app/.venv/bin/python
                 - -m
                 - src.monitoring.run_drift_report
               env:
                 - name: GCS_BUCKET_NAME
-                  value: fraud-detection-prediction
+                  value: fraud-shield-demo
                 - name: DRIFT_REPORT_PREFIX
                   value: drift-reports
                 - name: PROJECT_ID
-                  value: fraud-detection-493811
+                  value: project-81c35834-dcf8-4001-9b2
                 - name: BQ_DATASET
-                  value: fraud_monitoring
+                  value: fraud_shield_monitoring
                 - name: REFERENCE_DATA_PATH
                   value: data/raw/transactions.csv
               resources:
