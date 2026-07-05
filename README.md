@@ -6,6 +6,14 @@ FraudShield là project phát hiện gian lận giao dịch tài chính, phục 
 
 Dữ liệu sử dụng là bộ data trên Kaggle [Fraud detection 1M transactions - 7 fraud types](https://www.kaggle.com/datasets/sergionefedov/fraud-detection-1m-transactions-7-fraud-types) với riêng `transactions.csv`. 
 
+## Demo Video
+
+<p align="center">
+    <a href="https://www.youtube.com/watch?v=vMW7HmM4AwI">
+        <img src="https://i.ytimg.com/an_webp/vMW7HmM4AwI/mqdefault_6s.webp?du=3000&sqp=CJaoqtIG&rs=AOn4CLDONwu1V30T5qcj_du0KHtbTJK8MQ"/>
+    </a>
+</p>
+
 ## Cấu trúc repo
 
 ```text
