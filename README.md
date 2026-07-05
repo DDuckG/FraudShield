@@ -1,9 +1,8 @@
+![Background](images/background.png)
+
 # FraudShield
 
-![Background](images/background.png)
 FraudShield là project phát hiện gian lận giao dịch tài chính, phục vụ cho đồ án cuối kì Nhập môn Khoa học Dữ liệu. Repo này bao gồm đầy đủ từ luồng dữ liệu, feature engineering, huấn luyện mô hình, API dự đoán, giao diện Streamlit, logging prediction lên GCS, drift report với BigQuery/Evidently và manifest triển khai lên GKE. Để hiểu chi tiết hơn về quá trình hình thành của dự án, hãy xem thêm tại [Report](https://github.com/DDuckG/FraudShield/blob/main/reports/report_FraudShield.pdf)
-
-
 
 Dữ liệu sử dụng là bộ data trên Kaggle [Fraud detection 1M transactions - 7 fraud types](https://www.kaggle.com/datasets/sergionefedov/fraud-detection-1m-transactions-7-fraud-types) với riêng `transactions.csv`. 
 
