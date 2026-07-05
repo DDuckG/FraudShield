@@ -43,7 +43,7 @@ def _normalize(raw: dict) -> dict:
             detail = ""
 
         if name:
-            normalized_rules.append({"name": name.replace("_", " ").title(), "detail": detail})
+            normalized_rules.append({"name": name, "detail": detail})
 
     # Panel cũ đang đọc bộ tên này, nên client đổi tên response một lần ở đây.
     return {

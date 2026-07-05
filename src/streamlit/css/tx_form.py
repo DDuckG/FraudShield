@@ -7,12 +7,15 @@ import streamlit as st
 
 FORM_CSS = """
 <style>
-.form-shell {
+.st-key-tx_form_shell {
     border: 1px solid var(--line);
     background: linear-gradient(180deg, rgba(17, 24, 39, .96), rgba(9, 14, 22, .98));
     border-radius: var(--radius-lg);
     padding: var(--s-4);
     box-shadow: var(--shadow-soft);
+}
+.st-key-tx_form_shell > div {
+    gap: var(--s-3);
 }
 .form-kicker {
     color: var(--primary);
@@ -32,16 +35,6 @@ FORM_CSS = """
     line-height: 1.6;
     font-size: var(--fs-md);
     margin-bottom: var(--s-4);
-}
-.preset-note {
-    border: 1px solid rgba(45, 212, 191, .22);
-    background: rgba(45, 212, 191, .08);
-    color: var(--text-soft);
-    border-radius: var(--radius-md);
-    padding: var(--s-3);
-    font-size: var(--fs-sm);
-    line-height: 1.5;
-    margin: var(--s-3) 0 var(--s-3);
 }
 .section-title {
     color: var(--muted);
@@ -73,7 +66,7 @@ FORM_CSS = """
     flex: 0 0 auto;
 }
 @media (max-width: 720px) {
-    .form-shell {
+    .st-key-tx_form_shell {
         padding: var(--s-3);
         border-radius: var(--radius-md);
     }
@@ -85,6 +78,9 @@ FORM_CSS = """
 """
 
 MERCHANT_CATEGORIES = [
+    "crypto",
+    "gambling",
+    "money_transfer",
     "grocery",
     "online_retail",
     "restaurant",
@@ -111,26 +107,26 @@ DAY_OPTIONS = {
 
 DEMO_CASES = {
     "Rủi ro cao - đêm, thiết bị lạ": {
-        "transaction_id": "TX-DEMO-HIGH",
-        "user_id": "USR-7821",
-        "hour_of_day": 2,
+        "transaction_id": "TXN000045208",
+        "user_id": "ACC0031537",
+        "hour_of_day": 5,
         "day_label": "Thứ bảy",
         "is_weekend": True,
-        "amount": 250.0,
-        "merchant_country": "US",
-        "merchant_category": "electronics",
-        "mcc_code": 5732,
+        "amount": 4859.55,
+        "merchant_country": "DE",
+        "merchant_category": "crypto",
+        "mcc_code": 6051,
         "device_type": "mobile_app",
-        "ip_risk_score": 0.72,
+        "ip_risk_score": 47.7,
         "card_present": False,
         "device_known": False,
         "is_foreign_txn": True,
-        "has_2fa": False,
-        "time_since_last_s": 120.0,
-        "velocity_1h": 4.0,
-        "amount_vs_avg_ratio": 2.5,
-        "account_age_days": 120,
-        "credit_limit": 5000.0,
+        "has_2fa": True,
+        "time_since_last_s": 209.0,
+        "velocity_1h": 8.0,
+        "amount_vs_avg_ratio": 69.631,
+        "account_age_days": 3640,
+        "credit_limit": 2189.7,
     },
     "Bình thường - cửa hàng quen": {
         "transaction_id": "TX-DEMO-LOW",
@@ -143,7 +139,7 @@ DEMO_CASES = {
         "merchant_category": "grocery",
         "mcc_code": 5411,
         "device_type": "pos_terminal",
-        "ip_risk_score": 0.06,
+        "ip_risk_score": 6.0,
         "card_present": True,
         "device_known": True,
         "is_foreign_txn": False,
@@ -191,33 +187,10 @@ def _parse_float(label: str, value: str, min_value: float = 0.0) -> float | None
 
 def render_tx_form() -> dict | None:
     st.markdown(FORM_CSS, unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class="form-shell">
-            <div class="form-kicker">FraudShield demo trực tiếp</div>
-            <div class="form-title">Nhập giao dịch cần kiểm tra</div>
-            <div class="form-copy">
-                Form này gửi payload thật tới FastAPI <b>/predict</b>. Có thể dùng mẫu sẵn để demo nhanh,
-                hoặc chỉnh từng trường để xem mô hình phản ứng như thế nào.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    with st.container(key="tx_form_shell"):
+        case_name = st.selectbox("Mẫu giao dịch", list(DEMO_CASES.keys()))
+        case = DEMO_CASES[case_name]
 
-    case_name = st.selectbox("Mẫu giao dịch", list(DEMO_CASES.keys()))
-    case = DEMO_CASES[case_name]
-
-    st.markdown(
-        """
-        <div class="preset-note">
-            Mẫu chỉ là điểm bắt đầu. Các trường bên dưới vẫn có thể chỉnh trước khi bấm phân tích.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    with st.form("tx_form", clear_on_submit=False):
         _section("Định danh")
         col1, col2 = st.columns(2)
         with col1:
@@ -254,7 +227,7 @@ def render_tx_form() -> dict | None:
         with col1:
             device_type = st.selectbox("Thiết bị", DEVICE_TYPES, index=_idx(DEVICE_TYPES, case["device_type"]))
         with col2:
-            ip_risk_score_raw = st.text_input("Điểm rủi ro IP", value=f"{case['ip_risk_score']:.2f}")
+            ip_risk_score_raw = st.text_input("Điểm rủi ro IP (0-100)", value=f"{case['ip_risk_score']:.2f}")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -279,17 +252,17 @@ def render_tx_form() -> dict | None:
         with col2:
             account_age_days_raw = st.text_input("Tuổi tài khoản (ngày)", value=str(case["account_age_days"]))
 
-        submitted = st.form_submit_button("Phân tích giao dịch", use_container_width=True)
+        submitted = st.button("Phân tích giao dịch", use_container_width=True)
 
-    st.markdown(
-        """
-        <div class="api-pill">
-            <div class="api-dot"></div>
-            <div>Payload được gửi tới FastAPI, kết quả hiển thị ở panel bên phải và có thể gửi feedback lại hệ thống.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        st.markdown(
+            """
+            <div class="api-pill">
+                <div class="api-dot"></div>
+                <div>Payload được gửi tới FastAPI, kết quả hiển thị ở panel bên phải và có thể gửi feedback lại hệ thống.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     if not submitted:
         return None

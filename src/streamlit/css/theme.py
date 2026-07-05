@@ -82,21 +82,19 @@ label, [data-testid="stWidgetLabel"] {
 [data-testid="stNumberInput"] input,
 [data-baseweb="select"] > div {
     background: var(--surface-soft) !important;
-    border: 1px solid var(--line-strong) !important;
+    border: 1px solid rgba(148, 163, 184, .24) !important;
     border-radius: var(--radius-md) !important;
     color: var(--text) !important;
     min-height: var(--s-7) !important;
+    height: var(--s-7) !important;
     box-shadow: none !important;
     font-size: var(--fs-md) !important;
+    line-height: 20px !important;
 }
 
 [data-baseweb="input"],
 [data-baseweb="input"] > div,
 [data-baseweb="input"] input,
-.stTextInput > div,
-.stTextInput > div > div,
-.stTextInput > div > div > div,
-.stTextInput div,
 input[type="text"],
 input[type="number"],
 textarea {
@@ -104,6 +102,29 @@ textarea {
     color: var(--text) !important;
     -webkit-text-fill-color: var(--text) !important;
     caret-color: var(--primary) !important;
+    outline: none !important;
+}
+
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input {
+    padding: 0 var(--s-3) 2px !important;
+}
+
+[data-baseweb="input"],
+[data-baseweb="input"] > div {
+    border-radius: var(--radius-md) !important;
+    align-items: center !important;
+}
+
+[data-baseweb="select"] > div,
+[data-baseweb="select"] div {
+    align-items: center !important;
+}
+
+[data-baseweb="select"] [role="button"],
+[data-baseweb="select"] [role="combobox"] {
+    min-height: var(--s-7) !important;
+    align-items: center !important;
 }
 
 input:-webkit-autofill,
@@ -126,9 +147,20 @@ input:-webkit-autofill:focus {
 }
 
 [data-testid="stTextInput"] input:focus,
-[data-testid="stNumberInput"] input:focus {
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 var(--s-1) rgba(45, 212, 191, .14) !important;
+[data-testid="stNumberInput"] input:focus,
+[data-baseweb="select"] > div:focus-within,
+[data-baseweb="input"]:focus-within,
+[data-baseweb="input"] > div:focus-within {
+    border-color: rgba(248, 250, 252, .72) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+[aria-invalid="true"],
+[data-baseweb="input"]:has([aria-invalid="true"]),
+[data-baseweb="input"] > div:has([aria-invalid="true"]) {
+    border-color: var(--danger) !important;
+    border-radius: var(--radius-md) !important;
 }
 
 [data-testid="stToggle"] label {

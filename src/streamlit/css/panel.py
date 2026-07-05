@@ -12,7 +12,6 @@ PANEL_CSS = """
     background: linear-gradient(180deg, rgba(17, 24, 39, .96), rgba(9, 14, 22, .98));
     border-radius: var(--radius-lg);
     padding: var(--s-4);
-    min-height: 560px;
     box-shadow: var(--shadow-soft);
 }
 .result-eyebrow {
@@ -68,9 +67,12 @@ PANEL_CSS = """
 .score-value.high { color: var(--danger); }
 .metric-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--s-2);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-3);
     margin: var(--s-3) 0 var(--s-4);
+}
+.metric-card.wide {
+    grid-column: 1 / -1;
 }
 .metric-card {
     border: 1px solid var(--line);
@@ -88,12 +90,21 @@ PANEL_CSS = """
 .metric-value {
     color: var(--text);
     font-weight: 700;
-    word-break: break-word;
+    word-break: normal;
+}
+.metric-value.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: var(--fs-sm);
+    overflow-wrap: anywhere;
+}
+.rules-title {
+    margin-top: var(--s-3);
+    margin-bottom: var(--s-2);
 }
 .rules-list {
     display: grid;
     gap: var(--s-2);
-    margin-top: var(--s-2);
+    margin-top: 0;
 }
 .rule-item {
     display: flex;
@@ -178,14 +189,30 @@ PANEL_CSS = """
 """
 
 _SEVERITY_TEXT = {
-    "HIGH": "Rủi ro cao",
-    "MEDIUM": "Cần kiểm tra",
-    "LOW": "Rủi ro thấp",
+    "HIGH": "Cao",
+    "MEDIUM": "Trung bình",
+    "LOW": "Thấp",
+}
+
+_RULE_TEXT = {
+    "high_amount": "Số tiền cao",
+    "high amount": "Số tiền cao",
+    "night_transaction": "Giao dịch ban đêm",
+    "night transaction": "Giao dịch ban đêm",
+    "high_ip_risk": "IP rủi ro cao",
+    "high ip risk": "IP rủi ro cao",
+    "velocity_spike": "Tần suất tăng bất thường",
+    "velocity spike": "Tần suất tăng bất thường",
+    "high_utilization": "Dùng hạn mức cao",
+    "high utilization": "Dùng hạn mức cao",
 }
 
 
 def _clean(text: object) -> str:
     text = re.sub(r"</?[^>]+>", "", str(text or ""))
+    key = text.strip().lower()
+    if key in _RULE_TEXT:
+        return _RULE_TEXT[key]
     return text.replace("_", " ").strip().title()
 
 
@@ -194,6 +221,19 @@ def _fmt_time(value: object) -> str:
     if "T" in raw:
         return raw.replace("T", " ").split(".")[0]
     return raw
+
+
+def _fmt_score(score: float) -> str:
+    percent = score * 100
+    if percent == 0:
+        return "0%"
+    if percent < 0.01:
+        return f"{percent:.4f}%"
+    if percent < 0.1:
+        return f"{percent:.3f}%"
+    if percent < 1:
+        return f"{percent:.2f}%"
+    return f"{percent:.1f}%"
 
 
 def render_result_panel(result: dict) -> str | None:
@@ -207,11 +247,11 @@ def render_result_panel(result: dict) -> str | None:
 
     status_class = "risky" if is_fraud else "safe"
     score_class = "high" if is_fraud else ""
-    status_title = "Giao dịch đáng nghi" if is_fraud else "Giao dịch có vẻ an toàn"
+    status_title = "Gian lận" if is_fraud else "An toàn"
     status_copy = (
-        "Mô hình đánh dấu giao dịch này là gian lận. Nên giữ lại để kiểm tra hoặc đối soát thêm."
+        "Mô hình đánh dấu giao dịch này là gian lận. Nên giữ lại để kiểm tra."
         if is_fraud
-        else "Mô hình chưa thấy tín hiệu gian lận rõ. Vẫn có thể gửi feedback nếu kết quả thực tế khác."
+        else "Mô hình chưa thấy tín hiệu gian lận rõ."
     )
 
     st.markdown(
@@ -225,7 +265,7 @@ def render_result_panel(result: dict) -> str | None:
                 </div>
                 <div class="score-chip">
                     <div class="score-label">Điểm gian lận</div>
-                    <div class="score-value {score_class}">{score * 100:.1f}%</div>
+                    <div class="score-value {score_class}">{_fmt_score(score)}</div>
                 </div>
             </div>
             <div class="metric-grid">
@@ -234,19 +274,20 @@ def render_result_panel(result: dict) -> str | None:
                     <div class="metric-value">{_SEVERITY_TEXT.get(severity, severity)}</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Mã dự đoán</div>
-                    <div class="metric-value">{prediction_id or "-"}</div>
-                </div>
-                <div class="metric-card">
                     <div class="metric-label">Thời điểm</div>
                     <div class="metric-value">{_fmt_time(result.get("prediction_time"))}</div>
                 </div>
+                <div class="metric-card wide">
+                    <div class="metric-label">Mã dự đoán</div>
+                    <div class="metric-value mono">{prediction_id or "-"}</div>
+                </div>
             </div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown('<div class="result-eyebrow">Tín hiệu kích hoạt</div>', unsafe_allow_html=True)
+    st.markdown('<div class="result-eyebrow rules-title">Tín hiệu kích hoạt</div>', unsafe_allow_html=True)
     if factors:
         st.markdown('<div class="rules-list">', unsafe_allow_html=True)
         for factor in factors[:6]:
@@ -280,7 +321,6 @@ def render_result_panel(result: dict) -> str | None:
     with st.expander("Phản hồi API gốc"):
         st.json(result.get("_raw", result))
 
-    st.markdown("</div>", unsafe_allow_html=True)
     return action
 
 

@@ -178,7 +178,7 @@ def _make_response(score: float, rules: list[str]) -> FraudResponse:
     score = float(score)
     return FraudResponse(
         is_fraud=score >= THRESHOLD,
-        fraud_score=round(score, 4),
+        fraud_score=round(score, 8),
         risk_level=_risk_level(score),
         triggered_rules=rules,
         prediction_time=datetime.now(),

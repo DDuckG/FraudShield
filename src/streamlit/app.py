@@ -1,4 +1,5 @@
 import sys
+from html import escape
 from pathlib import Path
 
 import requests
@@ -9,7 +10,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from css.panel import render_empty_panel, render_result_panel
-from css.sidebar import render_sidebar
 from css.theme import inject_theme
 from css.tx_form import render_tx_form
 from web import health_check, safe_analyze, safe_feedback
@@ -23,7 +23,6 @@ st.set_page_config(
 )
 
 inject_theme()
-render_sidebar()
 
 
 def _api_status() -> tuple[dict | None, str | None]:
@@ -61,17 +60,19 @@ def _render_header(status: dict | None, error: str | None) -> None:
             align-items: flex-start;
         }}
         .hero-kicker {{
-            color: var(--primary);
-            font: 700 var(--fs-xs) 'JetBrains Mono', monospace;
-            text-transform: uppercase;
-            letter-spacing: .12em;
-            margin-bottom: var(--s-2);
+            display: none;
         }}
         .hero-title {{
             color: var(--text);
             font: 800 var(--fs-3xl) 'Space Grotesk', sans-serif;
             line-height: 1.1;
             margin-bottom: var(--s-2);
+        }}
+        .hero-subtitle {{
+            color: var(--text);
+            font: 700 var(--fs-2xl) 'Space Grotesk', sans-serif;
+            line-height: 1.2;
+            margin-bottom: var(--s-3);
         }}
         .hero-copy {{
             color: var(--text-soft);
@@ -120,6 +121,9 @@ def _render_header(status: dict | None, error: str | None) -> None:
             .hero-title {{
                 font-size: var(--fs-2xl);
             }}
+            .hero-subtitle {{
+                font-size: var(--fs-xl);
+            }}
             .status-stack {{
                 margin-top: 0;
             }}
@@ -128,8 +132,8 @@ def _render_header(status: dict | None, error: str | None) -> None:
         <div class="hero">
             <div class="hero-top">
                 <div>
-                    <div class="hero-kicker">FraudShield kiểm tra giao dịch</div>
-                    <div class="hero-title">Kiểm tra rủi ro giao dịch</div>
+                    <div class="hero-title">Fraud Shield</div>
+                    <div class="hero-subtitle">Công cụ kiểm tra giao dịch bất thường</div>
                     <div class="hero-copy">
                         Demo này gọi trực tiếp FastAPI model service, trả về fraud score, rule giải thích
                         và cho phép gửi feedback để lưu nhãn review.
@@ -154,6 +158,42 @@ def _render_header(status: dict | None, error: str | None) -> None:
         st.warning(f"Không đọc được /health: {error}")
 
 
+def _render_toast(message: str | None) -> None:
+    if not message:
+        return
+
+    st.markdown(
+        f"""
+        <style>
+        .app-toast {{
+            position: fixed;
+            top: var(--s-4);
+            right: var(--s-4);
+            z-index: 9999;
+            max-width: min(420px, calc(100vw - 48px));
+            border: 1px solid rgba(52, 211, 153, .35);
+            background: rgba(20, 83, 45, .96);
+            color: #d1fae5;
+            border-radius: var(--radius-md);
+            padding: var(--s-3) var(--s-4);
+            box-shadow: var(--shadow-soft);
+            font-weight: 700;
+            pointer-events: none;
+            animation: toast-life 4.2s ease-out forwards;
+        }}
+        @keyframes toast-life {{
+            0% {{ transform: translateX(24px); opacity: 0; }}
+            8% {{ transform: translateX(0); opacity: 1; }}
+            88% {{ transform: translateX(0); opacity: 1; }}
+            100% {{ transform: translateX(8px); opacity: 0; visibility: hidden; }}
+        }}
+        </style>
+        <div class="app-toast">{escape(message)}</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 status, health_error = _api_status()
 _render_header(status, health_error)
 
@@ -169,6 +209,8 @@ if "last_warning" not in st.session_state:
 if "feedback_notice" not in st.session_state:
     st.session_state["feedback_notice"] = None
 
+_render_toast(st.session_state["feedback_notice"])
+
 if form_data:
     with st.spinner("Đang gọi FastAPI model service..."):
         result, warning = safe_analyze(form_data)
@@ -180,9 +222,6 @@ with right_col:
     if st.session_state["last_warning"]:
         st.error(st.session_state["last_warning"])
 
-    if st.session_state["feedback_notice"]:
-        st.success(st.session_state["feedback_notice"])
-
     result = st.session_state["last_result"]
     if result:
         action = render_result_panel(result)
@@ -193,7 +232,8 @@ with right_col:
                 st.session_state["feedback_notice"] = None
                 st.error(warning)
             else:
-                st.session_state["feedback_notice"] = f"Đã lưu feedback cho prediction {feedback['prediction_id']}."
+                short_id = str(feedback["prediction_id"])[:8]
+                st.session_state["feedback_notice"] = f"Đã lưu feedback cho dự đoán {short_id}."
                 st.rerun()
     else:
         render_empty_panel()
