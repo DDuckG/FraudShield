@@ -1,124 +1,211 @@
 DARK_THEME_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg-primary: #0d0f14;
-    --bg-secondary: #131720;
-    --bg-card: #1a1f2e;
-    --bg-card-hover: #1f2538;
-    --border: #2a3045;
-    --border-accent: #3d4a6b;
-    --text-primary: #e8eaf0;
-    --text-secondary: #8892aa;
-    --text-muted: #4a5568;
-    --accent-teal: #00e5c3;
-    --accent-teal-dim: rgba(0,229,195,0.12);
-    --accent-red: #ff4757;
-    --accent-red-dim: rgba(255,71,87,0.12);
-    --accent-amber: #ffa502;
-    --accent-amber-dim: rgba(255,165,2,0.12);
-    --accent-blue: #4a9eff;
-    --severity-high: #ff4757;
-    --font-mono: 'JetBrains Mono', monospace;
-    --font-sans: 'Space Grotesk', sans-serif;
-    --radius: 8px;
-    --radius-lg: 12px;
+    --bg: #090e16;
+    --surface: #111827;
+    --surface-2: #172033;
+    --surface-soft: rgba(255, 255, 255, .04);
+    --line: rgba(148, 163, 184, .18);
+    --line-strong: rgba(148, 163, 184, .30);
+    --text: #f8fafc;
+    --text-soft: #cbd5e1;
+    --muted: #94a3b8;
+    --muted-2: #64748b;
+    --primary: #2dd4bf;
+    --primary-strong: #14b8a6;
+    --accent: #60a5fa;
+    --danger: #fb7185;
+    --warning: #fbbf24;
+    --success: #34d399;
+
+    --s-1: 4px;
+    --s-2: 8px;
+    --s-3: 16px;
+    --s-4: 24px;
+    --s-5: 32px;
+    --s-6: 40px;
+    --s-7: 48px;
+    --s-8: 64px;
+
+    --fs-xs: 10px;
+    --fs-sm: 12px;
+    --fs-md: 14px;
+    --fs-lg: 16px;
+    --fs-xl: 20px;
+    --fs-2xl: 24px;
+    --fs-3xl: 32px;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --shadow-soft: 0 16px 48px rgba(0, 0, 0, .28);
 }
 
-/* ── GLOBAL RESET ── */
 html, body, [class*="css"] {
-    font-family: var(--font-sans) !important;
-    background-color: var(--bg-primary) !important;
-    color: var(--text-primary) !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    background: var(--bg) !important;
+    color: var(--text) !important;
 }
 
-/* ── HIDE STREAMLIT CHROME ── */
 #MainMenu, footer, header { visibility: hidden; }
-.block-container { padding: 0 !important; max-width: 100% !important; }
-.stApp { background: var(--bg-primary) !important; }
-
-/* ── SIDEBAR ── */
-[data-testid="stSidebar"] {
-    background: var(--bg-secondary) !important;
-    border-right: 1px solid var(--border) !important;
-    width: 220px !important;
-    min-width: 220px !important;
+.stApp {
+    background:
+        linear-gradient(180deg, rgba(96, 165, 250, .06), transparent 320px),
+        var(--bg) !important;
 }
-[data-testid="stSidebar"] .stMarkdown { padding: 0 !important; }
+.block-container {
+    max-width: 1184px !important;
+    padding: var(--s-6) var(--s-4) var(--s-7) !important;
+}
+[data-testid="stHorizontalBlock"] {
+    gap: var(--s-4) !important;
+}
 
-/* ── INPUTS ── */
+[data-testid="stSidebar"] {
+    background: #0d1422 !important;
+    border-right: 1px solid var(--line) !important;
+}
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: var(--s-5) !important;
+}
+
+label, [data-testid="stWidgetLabel"] {
+    color: var(--muted) !important;
+    font: 700 var(--fs-xs) 'JetBrains Mono', monospace !important;
+    text-transform: uppercase !important;
+    letter-spacing: .08em !important;
+}
+
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input,
-[data-testid="stSelectbox"] select {
-    background: #0d1117 !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius) !important;
-    color: var(--text-primary) !important;
-    font-family: var(--font-mono) !important;
-    font-size: 13px !important;
+[data-baseweb="select"] > div {
+    background: var(--surface-soft) !important;
+    border: 1px solid var(--line-strong) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text) !important;
+    min-height: var(--s-7) !important;
+    box-shadow: none !important;
+    font-size: var(--fs-md) !important;
 }
+
+[data-baseweb="input"],
+[data-baseweb="input"] > div,
+[data-baseweb="input"] input,
+.stTextInput > div,
+.stTextInput > div > div,
+.stTextInput > div > div > div,
+.stTextInput div,
+input[type="text"],
+input[type="number"],
+textarea {
+    background-color: var(--surface-soft) !important;
+    color: var(--text) !important;
+    -webkit-text-fill-color: var(--text) !important;
+    caret-color: var(--primary) !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    box-shadow: 0 0 0 1000px var(--surface-2) inset !important;
+    -webkit-text-fill-color: var(--text) !important;
+}
+
+[data-testid="stNumberInput"] div[data-baseweb="input"],
+[data-testid="stNumberInput"] div[data-baseweb="input"] > div,
+[data-testid="stNumberInput"] button {
+    background: var(--surface-soft) !important;
+    border-color: var(--line-strong) !important;
+    color: var(--text) !important;
+}
+
+[data-testid="stNumberInput"] input {
+    -webkit-text-fill-color: var(--text) !important;
+}
+
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {
-    border-color: var(--accent-teal) !important;
-    box-shadow: 0 0 0 2px var(--accent-teal-dim) !important;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 var(--s-1) rgba(45, 212, 191, .14) !important;
 }
 
-/* ── SELECTBOX ── */
-[data-testid="stSelectbox"] > div > div {
-    background: #0d1117 !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius) !important;
-    color: var(--text-primary) !important;
-    font-family: var(--font-mono) !important;
+[data-testid="stToggle"] label {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-size: var(--fs-sm) !important;
 }
 
-/* ── LABELS ── */
-label, [data-testid="stWidgetLabel"] {
-    color: var(--text-secondary) !important;
-    font-size: 11px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.08em !important;
-    font-family: var(--font-mono) !important;
+[data-testid="stButton"] button,
+[data-testid="stFormSubmitButton"] button {
+    border: 1px solid rgba(45, 212, 191, .30) !important;
+    background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+    color: #071018 !important;
+    border-radius: var(--radius-md) !important;
+    min-height: var(--s-7) !important;
+    font-weight: 800 !important;
+    letter-spacing: .01em !important;
+    transition: transform .12s ease, filter .12s ease, box-shadow .12s ease !important;
+}
+[data-testid="stButton"] button:hover,
+[data-testid="stFormSubmitButton"] button:hover {
+    filter: brightness(1.05) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 var(--s-2) var(--s-4) rgba(20, 184, 166, .18) !important;
+}
+[data-testid="stButton"] button:active,
+[data-testid="stFormSubmitButton"] button:active {
+    transform: translateY(0);
+    filter: brightness(.96) !important;
+}
+[data-testid="stButton"] button:focus,
+[data-testid="stFormSubmitButton"] button:focus {
+    box-shadow: 0 0 0 var(--s-1) rgba(45, 212, 191, .20) !important;
+}
+[data-testid="stButton"] button:disabled {
+    background: rgba(148, 163, 184, .14) !important;
+    color: var(--muted-2) !important;
+    border-color: var(--line) !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
-/* ── DIVIDER ── */
-hr { border-color: var(--border) !important; }
-
-/* ── BUTTON ── */
-[data-testid="stButton"] button {
-    background: var(--accent-red) !important;
-    color: #fff !important;
-    border: none !important;
-    border-radius: var(--radius) !important;
-    font-family: var(--font-mono) !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.06em !important;
-    text-transform: uppercase !important;
-    transition: opacity 0.2s;
-    width: 100% !important;
-    padding: 0.6rem 1rem !important;
+[data-testid="stAlert"] {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--line) !important;
+    font-size: var(--fs-md) !important;
 }
-[data-testid="stButton"] button:hover { opacity: 0.85 !important; }
-
-/* ── SPINNER ── */
-[data-testid="stSpinner"] { color: var(--accent-teal) !important; }
-
-/* ── METRIC ── */
-[data-testid="stMetric"] {
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius-lg) !important;
-    padding: 1rem !important;
+hr {
+    border-color: var(--line) !important;
+}
+.stExpander {
+    border: 1px solid var(--line) !important;
+    border-radius: var(--radius-md) !important;
+    background: var(--surface-soft) !important;
 }
 
-/* ── COLUMNS GAP ── */
-[data-testid="stHorizontalBlock"] { gap: 1rem !important; }
+@media (max-width: 720px) {
+    .block-container {
+        padding: var(--s-4) var(--s-3) var(--s-6) !important;
+    }
+    [data-testid="stHorizontalBlock"] {
+        gap: var(--s-3) !important;
+    }
+    [data-testid="stSidebar"] {
+        width: min(310px, 86vw) !important;
+    }
+    label, [data-testid="stWidgetLabel"] {
+        font-size: var(--fs-xs) !important;
+        line-height: 1.3 !important;
+    }
+}
 </style>
 """
 
 
 def inject_theme():
-    """Inject the dark theme CSS into the Streamlit app."""
     import streamlit as st
+
     st.markdown(DARK_THEME_CSS, unsafe_allow_html=True)

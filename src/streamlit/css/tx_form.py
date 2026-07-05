@@ -1,80 +1,90 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import streamlit as st
 
 
 FORM_CSS = """
 <style>
-.form-header-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+.form-shell {
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(17, 24, 39, .96), rgba(9, 14, 22, .98));
+    border-radius: var(--radius-lg);
+    padding: var(--s-4);
+    box-shadow: var(--shadow-soft);
+}
+.form-kicker {
+    color: var(--primary);
+    font: 700 var(--fs-xs) 'JetBrains Mono', monospace;
+    letter-spacing: .12em;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #4a5568;
-    margin-bottom: 4px;
+    margin-bottom: var(--s-2);
 }
-.form-header-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 22px;
-    font-weight: 700;
-    color: #e8eaf0;
-    margin-bottom: 4px;
-    letter-spacing: -0.02em;
+.form-title {
+    color: var(--text);
+    font: 800 var(--fs-2xl) 'Space Grotesk', sans-serif;
+    line-height: 1.15;
+    margin-bottom: var(--s-2);
 }
-.form-subtitle {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #4a5568;
-    margin-bottom: 20px;
+.form-copy {
+    color: var(--text-soft);
+    line-height: 1.6;
+    font-size: var(--fs-md);
+    margin-bottom: var(--s-4);
+}
+.preset-note {
+    border: 1px solid rgba(45, 212, 191, .22);
+    background: rgba(45, 212, 191, .08);
+    color: var(--text-soft);
+    border-radius: var(--radius-md);
+    padding: var(--s-3);
+    font-size: var(--fs-sm);
     line-height: 1.5;
+    margin: var(--s-3) 0 var(--s-3);
 }
-.section-divider {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
+.section-title {
+    color: var(--muted);
+    font: 700 var(--fs-xs) 'JetBrains Mono', monospace;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #4a5568;
-    border-bottom: 1px solid #2a3045;
-    padding-bottom: 6px;
-    margin: 18px 0 12px;
+    letter-spacing: .12em;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--s-2);
+    margin: var(--s-4) 0 var(--s-3);
 }
-.neural-status {
+.api-pill {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: rgba(0,229,195,0.06);
-    border: 1px solid rgba(0,229,195,0.15);
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-top: 16px;
+    gap: var(--s-2);
+    border: 1px solid rgba(45, 212, 191, .22);
+    background: rgba(45, 212, 191, .08);
+    border-radius: var(--radius-md);
+    padding: var(--s-3);
+    color: var(--text-soft);
+    font-size: var(--fs-sm);
+    line-height: 1.5;
 }
-.neural-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #00e5c3;
-    animation: pulse 1.5s infinite;
-    flex-shrink: 0;
+.api-dot {
+    width: var(--s-2);
+    height: var(--s-2);
+    border-radius: 999px;
+    background: var(--primary);
+    box-shadow: 0 0 var(--s-3) rgba(45, 212, 191, .72);
+    flex: 0 0 auto;
 }
-@keyframes pulse {
-    0%,100% { opacity:1; transform:scale(1); }
-    50% { opacity:0.4; transform:scale(0.7); }
-}
-.neural-text {
-    font-size:12px;
-    color:#8892aa;
-    font-family:'Space Grotesk',sans-serif;
-}
-.neural-bold {
-    font-weight:600;
-    color:#00e5c3;
+@media (max-width: 720px) {
+    .form-shell {
+        padding: var(--s-3);
+        border-radius: var(--radius-md);
+    }
+    .form-title {
+        font-size: var(--fs-xl);
+    }
 }
 </style>
 """
 
-
 MERCHANT_CATEGORIES = [
-    "-- Select --",
     "grocery",
     "online_retail",
     "restaurant",
@@ -87,303 +97,195 @@ MERCHANT_CATEGORIES = [
     "travel",
 ]
 
-DEVICE_TYPES = [
-    "-- Select --",
-    "mobile_app",
-    "pos_terminal",
-    "web_browser",
-    "atm",
-    "phone_ivr",
-]
+DEVICE_TYPES = ["mobile_app", "pos_terminal", "web_browser", "atm", "phone_ivr"]
 
-DAY_OF_WEEK_OPTIONS = {
-    "-- Select --": None,
-    "0 — Monday": 0,
-    "1 — Tuesday": 1,
-    "2 — Wednesday": 2,
-    "3 — Thursday": 3,
-    "4 — Friday": 4,
-    "5 — Saturday": 5,
-    "6 — Sunday": 6,
+DAY_OPTIONS = {
+    "Thứ hai": 0,
+    "Thứ ba": 1,
+    "Thứ tư": 2,
+    "Thứ năm": 3,
+    "Thứ sáu": 4,
+    "Thứ bảy": 5,
+    "Chủ nhật": 6,
 }
 
-BINARY_OPTIONS = {
-    "-- Select --": None,
-    "No (0)": 0,
-    "Yes (1)": 1,
+DEMO_CASES = {
+    "Rủi ro cao - đêm, thiết bị lạ": {
+        "transaction_id": "TX-DEMO-HIGH",
+        "user_id": "USR-7821",
+        "hour_of_day": 2,
+        "day_label": "Thứ bảy",
+        "is_weekend": True,
+        "amount": 250.0,
+        "merchant_country": "US",
+        "merchant_category": "electronics",
+        "mcc_code": 5732,
+        "device_type": "mobile_app",
+        "ip_risk_score": 0.72,
+        "card_present": False,
+        "device_known": False,
+        "is_foreign_txn": True,
+        "has_2fa": False,
+        "time_since_last_s": 120.0,
+        "velocity_1h": 4.0,
+        "amount_vs_avg_ratio": 2.5,
+        "account_age_days": 120,
+        "credit_limit": 5000.0,
+    },
+    "Bình thường - cửa hàng quen": {
+        "transaction_id": "TX-DEMO-LOW",
+        "user_id": "USR-2044",
+        "hour_of_day": 14,
+        "day_label": "Thứ tư",
+        "is_weekend": False,
+        "amount": 42.5,
+        "merchant_country": "US",
+        "merchant_category": "grocery",
+        "mcc_code": 5411,
+        "device_type": "pos_terminal",
+        "ip_risk_score": 0.06,
+        "card_present": True,
+        "device_known": True,
+        "is_foreign_txn": False,
+        "has_2fa": True,
+        "time_since_last_s": 7200.0,
+        "velocity_1h": 1.0,
+        "amount_vs_avg_ratio": 0.8,
+        "account_age_days": 840,
+        "credit_limit": 8000.0,
+    },
 }
 
 
 def _section(label: str) -> None:
-    st.markdown(
-        f'<div class="section-divider">{label}</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown(f'<div class="section-title">{label}</div>', unsafe_allow_html=True)
 
 
-def _parse_text(label: str, value: str, errors: list[str]) -> str | None:
-    value = str(value).strip()
-    if not value:
-        errors.append(f"{label} is required.")
-        return None
-    return value
+def _idx(options: list[str], value: str) -> int:
+    return options.index(value) if value in options else 0
 
 
-def _parse_int(
-    label: str,
-    value: str,
-    errors: list[str],
-    min_value: int | None = None,
-    max_value: int | None = None,
-) -> int | None:
-    value = str(value).strip()
-
-    if not value:
-        errors.append(f"{label} is required.")
-        return None
-
+def _parse_int(label: str, value: str, min_value: int = 0, max_value: int | None = None) -> int | None:
     try:
-        parsed = int(value)
+        parsed = int(str(value).strip())
     except ValueError:
-        errors.append(f"{label} must be an integer.")
+        st.error(f"Cảnh báo: {label} cần là số nguyên.")
         return None
-
-    if min_value is not None and parsed < min_value:
-        errors.append(f"{label} must be >= {min_value}.")
+    if parsed < min_value or (max_value is not None and parsed > max_value):
+        st.error(f"Cảnh báo: {label} cần nằm trong khoảng hợp lệ.")
         return None
-
-    if max_value is not None and parsed > max_value:
-        errors.append(f"{label} must be <= {max_value}.")
-        return None
-
     return parsed
 
 
-def _parse_float(
-    label: str,
-    value: str,
-    errors: list[str],
-    min_value: float | None = None,
-    max_value: float | None = None,
-) -> float | None:
-    value = str(value).strip()
-
-    if not value:
-        errors.append(f"{label} is required.")
-        return None
-
+def _parse_float(label: str, value: str, min_value: float = 0.0) -> float | None:
     try:
-        parsed = float(value)
+        parsed = float(str(value).strip())
     except ValueError:
-        errors.append(f"{label} must be a number.")
+        st.error(f"Cảnh báo: {label} cần là số.")
         return None
-
-    if min_value is not None and parsed < min_value:
-        errors.append(f"{label} must be >= {min_value}.")
+    if parsed < min_value:
+        st.error(f"Cảnh báo: {label} không được âm.")
         return None
-
-    if max_value is not None and parsed > max_value:
-        errors.append(f"{label} must be <= {max_value}.")
-        return None
-
     return parsed
-
-
-def _parse_choice(
-    label: str,
-    selected_label: str,
-    mapping: dict[str, int | None],
-    errors: list[str],
-) -> int | None:
-    value = mapping.get(selected_label)
-
-    if value is None:
-        errors.append(f"{label} is required.")
-        return None
-
-    return int(value)
-
-
-def _parse_select_text(
-    label: str,
-    value: str,
-    errors: list[str],
-) -> str | None:
-    if not value or value == "-- Select --":
-        errors.append(f"{label} is required.")
-        return None
-
-    return value
 
 
 def render_tx_form() -> dict | None:
-    """
-    Full transaction form.
-
-    Users manually provide all fields required by FastAPI /predict.
-    This UI does not run the model locally.
-    It only sends the transaction payload to FastAPI and displays the API result.
-    """
     st.markdown(FORM_CSS, unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="form-shell">
+            <div class="form-kicker">FraudShield demo trực tiếp</div>
+            <div class="form-title">Nhập giao dịch cần kiểm tra</div>
+            <div class="form-copy">
+                Form này gửi payload thật tới FastAPI <b>/predict</b>. Có thể dùng mẫu sẵn để demo nhanh,
+                hoặc chỉnh từng trường để xem mô hình phản ứng như thế nào.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    case_name = st.selectbox("Mẫu giao dịch", list(DEMO_CASES.keys()))
+    case = DEMO_CASES[case_name]
 
     st.markdown(
         """
-        <div class="form-header-tag">TRANSACTION ANALYSIS</div>
-        <div class="form-header-title">Transaction<br>Parameters</div>
-        <div class="form-subtitle">
-            Fill all transaction features below. This Streamlit UI sends the JSON payload
-            to FastAPI <b>/predict</b> and displays the returned fraud_score and is_fraud.
+        <div class="preset-note">
+            Mẫu chỉ là điểm bắt đầu. Các trường bên dưới vẫn có thể chỉnh trước khi bấm phân tích.
         </div>
         """,
         unsafe_allow_html=True,
     )
 
     with st.form("tx_form", clear_on_submit=False):
-        _section("Identity")
-
+        _section("Định danh")
         col1, col2 = st.columns(2)
         with col1:
-            transaction_id_raw = st.text_input(
-                "Transaction ID *",
-                placeholder="TXN-000001",
-            )
+            transaction_id = st.text_input("Mã giao dịch", value=f"{case['transaction_id']}-{datetime.now().strftime('%H%M%S')}")
         with col2:
-            user_id_raw = st.text_input(
-                "User ID *",
-                placeholder="USR-000001",
-            )
+            user_id = st.text_input("Mã người dùng", value=case["user_id"])
 
-        _section("Time Context")
+        _section("Thời gian")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            hour_of_day_raw = st.text_input("Giờ giao dịch", value=str(case["hour_of_day"]))
+        with col2:
+            day_label = st.selectbox("Ngày trong tuần", list(DAY_OPTIONS.keys()), index=_idx(list(DAY_OPTIONS.keys()), case["day_label"]))
+        with col3:
+            is_weekend = st.toggle("Cuối tuần", value=bool(case["is_weekend"]))
+
+        _section("Giao dịch")
+        col1, col2 = st.columns(2)
+        with col1:
+            amount_raw = st.text_input("Số tiền", value=f"{case['amount']:.2f}")
+        with col2:
+            credit_limit_raw = st.text_input("Hạn mức thẻ", value=f"{case['credit_limit']:.2f}")
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            hour_of_day_raw = st.text_input(
-                "Hour of Day *",
-                placeholder="0-23",
-            )
+            merchant_country = st.text_input("Quốc gia đơn vị bán", value=case["merchant_country"], max_chars=3)
         with col2:
-            day_of_week_label = st.selectbox(
-                "Day of Week *",
-                options=list(DAY_OF_WEEK_OPTIONS.keys()),
-            )
+            merchant_category = st.selectbox("Nhóm đơn vị bán", MERCHANT_CATEGORIES, index=_idx(MERCHANT_CATEGORIES, case["merchant_category"]))
         with col3:
-            is_weekend_label = st.selectbox(
-                "Is Weekend *",
-                options=list(BINARY_OPTIONS.keys()),
-            )
+            mcc_code_raw = st.text_input("Mã MCC", value=str(case["mcc_code"]))
 
-        _section("Transaction Details")
+        _section("Thiết bị và bảo mật")
+        col1, col2 = st.columns(2)
+        with col1:
+            device_type = st.selectbox("Thiết bị", DEVICE_TYPES, index=_idx(DEVICE_TYPES, case["device_type"]))
+        with col2:
+            ip_risk_score_raw = st.text_input("Điểm rủi ro IP", value=f"{case['ip_risk_score']:.2f}")
 
         col1, col2 = st.columns(2)
         with col1:
-            amount_raw = st.text_input(
-                "Amount *",
-                placeholder="100.00",
-            )
+            card_present = st.toggle("Có thẻ", value=bool(case["card_present"]))
         with col2:
-            merchant_country_raw = st.text_input(
-                "Merchant Country *",
-                placeholder="US",
-                max_chars=3,
-            )
-
+            device_known = st.toggle("Thiết bị quen", value=bool(case["device_known"]))
         col1, col2 = st.columns(2)
         with col1:
-            merchant_category_raw = st.selectbox(
-                "Merchant Category *",
-                options=MERCHANT_CATEGORIES,
-            )
+            is_foreign_txn = st.toggle("Giao dịch ngoại", value=bool(case["is_foreign_txn"]))
         with col2:
-            mcc_code_raw = st.text_input(
-                "MCC Code *",
-                placeholder="5045",
-            )
+            has_2fa = st.toggle("Có 2FA", value=bool(case["has_2fa"]))
 
-        _section("Device & Security")
-
+        _section("Hành vi tài khoản")
         col1, col2 = st.columns(2)
         with col1:
-            device_type_raw = st.selectbox(
-                "Device Type *",
-                options=DEVICE_TYPES,
-            )
+            time_since_last_s_raw = st.text_input("Giây từ giao dịch trước", value=f"{case['time_since_last_s']:.0f}")
         with col2:
-            ip_risk_score_raw = st.text_input(
-                "IP Risk Score *",
-                placeholder="0.10",
-            )
-
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            card_present_label = st.selectbox(
-                "Card Present *",
-                options=list(BINARY_OPTIONS.keys()),
-            )
-        with col2:
-            device_known_label = st.selectbox(
-                "Device Known *",
-                options=list(BINARY_OPTIONS.keys()),
-            )
-        with col3:
-            is_foreign_txn_label = st.selectbox(
-                "Foreign Txn *",
-                options=list(BINARY_OPTIONS.keys()),
-            )
-        with col4:
-            has_2fa_label = st.selectbox(
-                "Has 2FA *",
-                options=list(BINARY_OPTIONS.keys()),
-            )
-
-        _section("Behavioural Signals")
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            time_since_last_s_raw = st.text_input(
-                "Time Since Last Txn (s) *",
-                placeholder="3600",
-            )
-        with col2:
-            velocity_1h_raw = st.text_input(
-                "Velocity Last 1h *",
-                placeholder="1",
-            )
-        with col3:
-            amount_vs_avg_ratio_raw = st.text_input(
-                "Amount vs Avg Ratio *",
-                placeholder="1.00",
-            )
-
-        _section("Account Info")
-
+            velocity_1h_raw = st.text_input("Số giao dịch trong 1h", value=f"{case['velocity_1h']:.0f}")
         col1, col2 = st.columns(2)
         with col1:
-            account_age_days_raw = st.text_input(
-                "Account Age Days *",
-                placeholder="365",
-            )
+            amount_vs_avg_ratio_raw = st.text_input("Tỷ lệ so với trung bình", value=f"{case['amount_vs_avg_ratio']:.2f}")
         with col2:
-            credit_limit_raw = st.text_input(
-                "Credit Limit *",
-                placeholder="5000.00",
-            )
+            account_age_days_raw = st.text_input("Tuổi tài khoản (ngày)", value=str(case["account_age_days"]))
 
-        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-
-        submitted = st.form_submit_button(
-            "⚡  RUN ANALYSIS ENGINE",
-            use_container_width=True,
-        )
+        submitted = st.form_submit_button("Phân tích giao dịch", use_container_width=True)
 
     st.markdown(
         """
-        <div class="neural-status">
-            <div class="neural-dot"></div>
-            <div class="neural-text">
-                <span class="neural-bold">FastAPI Client Active</span> —
-                This dashboard only collects transaction features and sends them to the
-                deployed FastAPI model service for real-time fraud prediction.
-            </div>
+        <div class="api-pill">
+            <div class="api-dot"></div>
+            <div>Payload được gửi tới FastAPI, kết quả hiển thị ở panel bên phải và có thể gửi feedback lại hệ thống.</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -392,151 +294,47 @@ def render_tx_form() -> dict | None:
     if not submitted:
         return None
 
-    errors: list[str] = []
+    hour_of_day = _parse_int("Giờ giao dịch", hour_of_day_raw, 0, 23)
+    amount = _parse_float("Số tiền", amount_raw, 0.01)
+    credit_limit = _parse_float("Hạn mức thẻ", credit_limit_raw, 0.01)
+    mcc_code = _parse_int("Mã MCC", mcc_code_raw, 0, 9999)
+    ip_risk_score = _parse_float("Điểm rủi ro IP", ip_risk_score_raw, 0.0)
+    time_since_last_s = _parse_float("Giây từ giao dịch trước", time_since_last_s_raw, 0.0)
+    velocity_1h = _parse_float("Số giao dịch trong 1h", velocity_1h_raw, 0.0)
+    amount_vs_avg_ratio = _parse_float("Tỷ lệ so với trung bình", amount_vs_avg_ratio_raw, 0.0)
+    account_age_days = _parse_int("Tuổi tài khoản", account_age_days_raw, 0)
 
-    transaction_id = _parse_text("Transaction ID", transaction_id_raw, errors)
-    user_id = _parse_text("User ID", user_id_raw, errors)
-
-    hour_of_day = _parse_int(
-        "Hour of Day",
-        hour_of_day_raw,
-        errors,
-        min_value=0,
-        max_value=23,
-    )
-    day_of_week = _parse_choice(
-        "Day of Week",
-        day_of_week_label,
-        DAY_OF_WEEK_OPTIONS,
-        errors,
-    )
-    is_weekend = _parse_choice(
-        "Is Weekend",
-        is_weekend_label,
-        BINARY_OPTIONS,
-        errors,
-    )
-
-    amount = _parse_float(
-        "Amount",
-        amount_raw,
-        errors,
-        min_value=0.0,
-    )
-    merchant_country = _parse_text(
-        "Merchant Country",
-        merchant_country_raw,
-        errors,
-    )
-    merchant_category = _parse_select_text(
-        "Merchant Category",
-        merchant_category_raw,
-        errors,
-    )
-    mcc_code = _parse_int(
-        "MCC Code",
-        mcc_code_raw,
-        errors,
-        min_value=0,
-        max_value=9999,
-    )
-
-    device_type = _parse_select_text(
-        "Device Type",
-        device_type_raw,
-        errors,
-    )
-    ip_risk_score = _parse_float(
-        "IP Risk Score",
-        ip_risk_score_raw,
-        errors,
-        min_value=0.0,
-        max_value=9999,
-    )
-
-    card_present = _parse_choice(
-        "Card Present",
-        card_present_label,
-        BINARY_OPTIONS,
-        errors,
-    )
-    device_known = _parse_choice(
-        "Device Known",
-        device_known_label,
-        BINARY_OPTIONS,
-        errors,
-    )
-    is_foreign_txn = _parse_choice(
-        "Foreign Txn",
-        is_foreign_txn_label,
-        BINARY_OPTIONS,
-        errors,
-    )
-    has_2fa = _parse_choice(
-        "Has 2FA",
-        has_2fa_label,
-        BINARY_OPTIONS,
-        errors,
-    )
-
-    time_since_last_s = _parse_int(
-        "Time Since Last Txn",
-        time_since_last_s_raw,
-        errors,
-        min_value=0,
-    )
-    velocity_1h = _parse_int(
-        "Velocity Last 1h",
-        velocity_1h_raw,
-        errors,
-        min_value=0,
-    )
-    amount_vs_avg_ratio = _parse_float(
-        "Amount vs Avg Ratio",
-        amount_vs_avg_ratio_raw,
-        errors,
-        min_value=0.0,
-    )
-
-    account_age_days = _parse_int(
-        "Account Age Days",
-        account_age_days_raw,
-        errors,
-        min_value=0,
-    )
-    credit_limit = _parse_float(
-        "Credit Limit",
-        credit_limit_raw,
-        errors,
-        min_value=0.0,
-    )
-
-    if merchant_country is not None:
-        merchant_country = merchant_country.strip().upper()
-
-    if errors:
-        for error in errors:
-            st.error(f"⚠️  {error}")
+    if None in {
+        hour_of_day,
+        amount,
+        credit_limit,
+        mcc_code,
+        ip_risk_score,
+        time_since_last_s,
+        velocity_1h,
+        amount_vs_avg_ratio,
+        account_age_days,
+    }:
         return None
 
     return {
-        "transaction_id": transaction_id,
-        "user_id": user_id,
+        "transaction_id": transaction_id.strip(),
+        "user_id": user_id.strip(),
         "hour_of_day": int(hour_of_day),
-        "day_of_week": int(day_of_week),
+        "day_of_week": int(DAY_OPTIONS[day_label]),
         "is_weekend": int(is_weekend),
         "amount": float(amount),
         "card_present": int(card_present),
         "device_known": int(device_known),
         "is_foreign_txn": int(is_foreign_txn),
         "has_2fa": int(has_2fa),
-        "time_since_last_s": int(time_since_last_s),
-        "velocity_1h": int(velocity_1h),
+        "time_since_last_s": float(time_since_last_s),
+        "velocity_1h": float(velocity_1h),
         "amount_vs_avg_ratio": float(amount_vs_avg_ratio),
         "account_age_days": int(account_age_days),
         "credit_limit": float(credit_limit),
         "merchant_category": merchant_category,
-        "merchant_country": merchant_country,
+        "merchant_country": merchant_country.strip().upper(),
         "device_type": device_type,
         "mcc_code": int(mcc_code),
         "ip_risk_score": float(ip_risk_score),

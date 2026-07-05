@@ -41,6 +41,7 @@ class FraudDetectionRequest(BaseModel):
 
 
 class FraudResponse(BaseModel):
+    prediction_id: Optional[str] = None
     is_fraud: bool
     fraud_score: float
     risk_level: Literal["Low", "Medium", "High"]

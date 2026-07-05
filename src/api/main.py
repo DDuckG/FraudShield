@@ -234,6 +234,7 @@ def predict(req: FraudDetectionRequest, request: Request):
         model_type=meta.get("selected_model", "unknown"),
         dataset_branch=meta.get("dataset_branch", "unknown"),
     )
+    result = result.model_copy(update={"prediction_id": record["prediction_id"]})
 
     try:
         gcs_blob = save_prediction_record(record)
@@ -275,6 +276,7 @@ def batch(reqs: list[FraudDetectionRequest], request: Request):
     model_version = env("MODEL_VERSION", "unknown")
     request_id = getattr(request.state, "request_id", None)
 
+    enriched_responses = []
     for req, result in zip(reqs, responses):
         record = make_prediction_record(
             request_id=request_id,
@@ -286,6 +288,8 @@ def batch(reqs: list[FraudDetectionRequest], request: Request):
             model_type=meta.get("selected_model", "unknown"),
             dataset_branch=meta.get("dataset_branch", "unknown"),
         )
+        result = result.model_copy(update={"prediction_id": record["prediction_id"]})
+        enriched_responses.append(result)
 
         try:
             gcs_blob = save_prediction_record(record)
@@ -306,9 +310,9 @@ def batch(reqs: list[FraudDetectionRequest], request: Request):
             )
 
     return BatchFraudResponse(
-        results=responses,
-        total=len(responses),
-        fraud_count=sum(1 for r in responses if r.is_fraud),
+        results=enriched_responses,
+        total=len(enriched_responses),
+        fraud_count=sum(1 for r in enriched_responses if r.is_fraud),
     )
 
 

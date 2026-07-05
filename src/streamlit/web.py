@@ -10,7 +10,7 @@ from src.settings import env
 
 log = logging.getLogger(__name__)
 
-BASE_URL = env("FRAUD_API_URL", "http://136.111.173.2").rstrip("/")
+BASE_URL = env("FRAUD_API_URL", "http://localhost:8000").rstrip("/")
 TIMEOUT = 120
 
 
@@ -47,6 +47,7 @@ def _normalize(raw: dict) -> dict:
 
     # Panel cũ đang đọc bộ tên này, nên client đổi tên response một lần ở đây.
     return {
+        "prediction_id": raw.get("prediction_id"),
         "is_fraud": bool(raw.get("is_fraud", False)),
         "confidence": float(raw.get("fraud_score", raw.get("confidence", 0.0))),
         "severity": str(raw.get("risk_level", raw.get("severity", "Low"))).upper(),
@@ -67,10 +68,28 @@ def health_check() -> dict:
     return _get("/health")
 
 
+def submit_feedback(prediction_id: str, actual_label: bool, source: str = "manual_review") -> dict:
+    payload = {
+        "prediction_id": prediction_id,
+        "actual_label": actual_label,
+        "source": source,
+    }
+    return _post("/feedback", payload)
+
+
 def safe_analyze(tx_data: dict) -> tuple[dict | None, str | None]:
     try:
         return analyze_transaction(tx_data), None
     except requests.RequestException as exc:
         message = f"Không gọi được API ở {BASE_URL}: {exc}"
+        log.warning(message)
+        return None, message
+
+
+def safe_feedback(prediction_id: str, actual_label: bool) -> tuple[dict | None, str | None]:
+    try:
+        return submit_feedback(prediction_id, actual_label), None
+    except requests.RequestException as exc:
+        message = f"Không gửi được feedback tới {BASE_URL}: {exc}"
         log.warning(message)
         return None, message
