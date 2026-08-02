@@ -131,11 +131,11 @@ stages:
     outs:
     - path: reports/training/baseline_leaderboard.csv
       hash: md5
-      md5: f8fdcb2f8e62b4a0053565d04106475a
+      md5: 1f85e2cf0b7903ef7b26b52d41c70e14
       size: 1519
     - path: reports/training/best_model.json
       hash: md5
-      md5: f8c2d22aaf1cbb25549cfe8a38c59a3f
+      md5: ba5fdb21c987b2e1939b78e794e323f1
       size: 362
   tune_model:
     cmd: uv run --group train python src/model/tune_model.py --config 
@@ -184,7 +184,7 @@ stages:
       size: 174
     - path: reports/training/best_model.json
       hash: md5
-      md5: f8c2d22aaf1cbb25549cfe8a38c59a3f
+      md5: ba5fdb21c987b2e1939b78e794e323f1
       size: 362
     - path: src/model/tune_model.py
       hash: md5
@@ -216,13 +216,13 @@ stages:
       size: 470
     - path: models/trained/trained_model.pkl
       hash: md5
-      md5: af4af9009dc96dd89f038f36c40a1f75
-      size: 3682772
+      md5: 9d0643e5aa9b19c2f9f55a844b2dedae
+      size: 1007684
     - path: models/trained/trained_model_meta.json
       hash: md5
-      md5: c74a7653c77bd878a46c7950a4a65464
-      size: 1996
+      md5: 05df36e2c8a2b34df0c44a17e14716ea
+      size: 1991
     - path: models/trained/tuning_pr_auc_by_trial.png
       hash: md5
-      md5: f69a3e48c73309eec97dc80a7b0dcc0c
-      size: 57416
+      md5: 79d7083ab68f8e967784b2c751d2dadd
+      size: 54297
